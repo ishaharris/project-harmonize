@@ -1,0 +1,32 @@
+{
+  "dhfr": {
+    "sequence_sha256": "2c0aa59f0156145dac28f68d22a44da3a64e6399f50809a086845685024241af",
+    "source_sha256": "45e0bd62ea300a2e8c3d6cb4dbb1f59b25df1a96e222728ae84d7a66ba2727df",
+    "source_url": "https://files.rcsb.org/download/1RF7.cif"
+  },
+  "fniii10": {
+    "sequence_sha256": "a5a0108372cfcb922ab031c5bc56191cd4d46f3735411f0e3a6eb927b02b48d8",
+    "source_sha256": "38b7298e2b3b355454326c75c5e5762391813d48f570ee70cc919189e759ed5f",
+    "source_url": "https://files.rcsb.org/download/1FNA.cif"
+  },
+  "gpd": {
+    "sequence_sha256": "f208bf9176eaf3378add983352c06e74db31def621ae0e73c995c8d9ba766ab4",
+    "source_sha256": "821676f2b71123319f7101c944767408a5ea1e0e2da14afee740513cf09be12e",
+    "source_url": "https://files.rcsb.org/download/1C5E.cif"
+  },
+  "pdz3": {
+    "sequence_sha256": "4def03c0d093295aeea3f5ca6e6a46191962973eb39e688d8a2aee3424aad824",
+    "source_sha256": "21fa6a15cecc1371da64d031fdc8c5c3bdabd03571cb2e234dae716d4b99b977",
+    "source_url": "https://files.rcsb.org/download/3K82.cif"
+  },
+  "ramr": {
+    "sequence_sha256": "8994cfc672456f72e401cc124b0bbea457f3dfd74fc0f090043b97f8a98bc762",
+    "source_sha256": "10420aa24a602e5651923e9021d4260784e5798a3249e02a3d12dffcf80b533f",
+    "source_url": "https://files.rcsb.org/download/3VVX.cif"
+  },
+  "rnasea": {
+    "sequence_sha256": "3fdb0ecddf682ea329409cbd65f1023ab86b89d3649887fc5fd63ee07a63f307",
+    "source_sha256": "715cece1a426fbcf0d6b4e93a6810f700dd8b9455a2eb666be71aaddd21f2846",
+    "source_url": "https://files.rcsb.org/download/7RSA.cif"
+  }
+}

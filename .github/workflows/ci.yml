@@ -1,0 +1,28 @@
+name: Offline validation
+on: [push, pull_request]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    env:
+      MPLCONFIGDIR: ${{ github.workspace }}/.tools/matplotlib
+      XDG_CACHE_HOME: ${{ github.workspace }}/.tools/cache
+      UV_CACHE_DIR: ${{ github.workspace }}/.uv-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.8.24'
+      - run: uv sync --frozen --group notebook
+      - run: uv run python scripts/bootstrap_native.py
+      - run: uv run python -m ipykernel install --sys-prefix --name harmonize --display-name 'Python (Harmonize)'
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest
+      - run: uv run python scripts/execute_notebook.py --mode validation
+      - run: uv run python scripts/execute_notebook.py --mode prediction
+      - uses: actions/upload-artifact@v4
+        with:
+          name: offline-validation
+          path: |
+            reports/
+            runs/validation/analysis/

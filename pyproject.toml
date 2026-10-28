@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "project-harmonize"
+version = "0.1.0"
+description = "Reproducible concordance analysis of protein structure predictions"
+readme = "README.md"
+requires-python = "==3.12.12"
+dependencies = [
+  "biotite>=1.5,<2",
+  "numpy>=2.0,<2.4",
+  "pandas>=2.2,<3",
+  "httpx>=0.28,<1",
+  "pydantic>=2.10,<3",
+  "PyYAML>=6,<7",
+  "python-dotenv>=1,<2",
+  "matplotlib>=3.9,<4",
+]
+
+[project.optional-dependencies]
+biohub = ["esm==3.4.1.post1"]
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.12,<1", "pre-commit>=4,<5", "nbstripout>=0.8,<1"]
+notebook = ["jupyterlab>=4,<5", "ipykernel>=6,<8", "ipywidgets>=8,<9", "py3Dmol>=2,<3", "nbclient>=0.10,<1", "nbconvert>=7,<8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/harmonize"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Notebook setup configures local caches before importing plotting libraries.
+"*.ipynb" = ["E402"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = ["live: explicitly enabled network inference", "native: requires pinned US-align"]

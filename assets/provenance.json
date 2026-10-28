@@ -1,0 +1,16 @@
+{
+  "package": "3dmol",
+  "version": "2.5.5",
+  "files": {
+    "3Dmol-min.js": {
+      "url": "https://unpkg.com/3dmol@2.5.5/build/3Dmol-min.js",
+      "sha256": "f7cc78921ae72e7623e89cdd111434f58c2efddd2ffda1cd212644b406fb8016",
+      "bytes": 537792
+    },
+    "3Dmol-LICENSE": {
+      "url": "https://unpkg.com/3dmol@2.5.5/LICENSE",
+      "sha256": "4c6eaaed856f3f28a3b1a98e74f4a8a71618de7d51ea4155c29f6f793bcef861",
+      "bytes": 4283
+    }
+  }
+}

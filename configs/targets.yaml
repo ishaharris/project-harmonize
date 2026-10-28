@@ -1,0 +1,43 @@
+targets:
+  - id: gpd
+    name: gpD
+    pdb_id: 1C5E
+    chain: A
+    expected_length: 95
+    notes: "Deposited shortened construct; experimental biological assembly is trimeric."
+  - id: ramr
+    name: RamR
+    pdb_id: 3VVX
+    chain: A
+    expected_length: 194
+    notes: "Preserve expression-tag residues and unresolved termini; experimental assembly is dimeric."
+  - id: fniii10
+    name: FNIII-10
+    pdb_id: 1FNA
+    chain: A
+    expected_length: 91
+    notes: "Deposited tenth fibronectin type III domain boundaries."
+  - id: pdz3
+    name: PDZ3
+    pdb_id: 3K82
+    chain: A
+    expected_length: 98
+    notes: "Native Asp332 restored; experimental succinimide at this position is excluded from reference metrics."
+    overrides:
+      - position: 28
+        from_residue: N
+        to_residue: D
+        author_residue: '332'
+        reason: "Restore native Asp332 rather than CCD parent ASN for experimental SNN."
+  - id: rnasea
+    name: RNase A
+    pdb_id: 7RSA
+    chain: A
+    expected_length: 124
+    notes: "Mature deposited chain; disulfide-rich monomer."
+  - id: dhfr
+    name: DHFR
+    pdb_id: 1RF7
+    chain: A
+    expected_length: 159
+    notes: "Preserve deposited Asp37; reference contains bound dihydrofolate."
