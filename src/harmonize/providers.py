@@ -42,14 +42,14 @@ class ProviderOutput:
 
 
 def readiness(provider):
-    if provider == "nvidia" and not os.getenv("NVIDIA_API_KEY"):
+    if provider in ("nvidia", "nvidia_openfold2") and not os.getenv("NVIDIA_API_KEY"):
         return "NVIDIA_API_KEY is not configured"
     if provider == "biohub":
         if not os.getenv("BIOHUB_API_TOKEN"):
             return "BIOHUB_API_TOKEN is not configured"
         if importlib.util.find_spec("esm") is None:
             return "Install the optional Biohub client: uv sync --extra biohub --group notebook"
-    if provider not in ("nvidia", "biohub", "esmatlas"):
+    if provider not in ("nvidia", "nvidia_openfold2", "biohub", "esmatlas"):
         return f"Unknown provider: {provider}"
     return None
 
@@ -310,6 +310,11 @@ class BiohubProvider:
 
 
 def make_provider(name):
-    return {"nvidia": NvidiaProvider, "esmatlas": ESMAtlasProvider, "biohub": BiohubProvider}[
-        name
-    ]()
+    from .openfold import OpenFoldProvider
+
+    return {
+        "nvidia": NvidiaProvider,
+        "nvidia_openfold2": OpenFoldProvider,
+        "esmatlas": ESMAtlasProvider,
+        "biohub": BiohubProvider,
+    }[name]()

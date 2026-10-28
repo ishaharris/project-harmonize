@@ -1,21 +1,25 @@
-protocol_version: '1'
+protocol_version: '2-openfold2-templates'
 models:
-  alphafold2:
-    provider: nvidia
-    version: "NVIDIA hosted AlphaFold2; immutable deployment version unavailable"
+  openfold2:
+    provider: nvidia_openfold2
+    version: "NVIDIA OpenFold2; AF2 weights 2.3.2 per model card; deployed build unavailable"
     samples: ['1', '2', '3', '4', '5']
     settings:
-      algorithm: jackhmmer
-      databases: [uniref90, mgnify, small_bfd]
-      e_value: 0.0001
-      iterations: 1
       relax_prediction: false
-      structure_model_preset: monomer
-      num_predictions_per_model: 1
-      max_msa_sequences: 4000
-      skip_template_search: false
-      override_msa_db_limits: false
-      template_searcher: hhsearch
+      use_templates: true
+      preparation:
+        msa:
+          databases: [all]
+          search_type: colabfold
+          e_value: 0.0001
+          output_alignment_formats: [a3m]
+        templates:
+          evalue_cutoff: 0.0001
+          min_identity: 0.9
+          min_query_coverage: 0.7
+          min_backbone_coverage: 0.7
+          max_candidates: 20
+          max_templates: 4
   esmfold:
     provider: esmatlas
     version: esmfold_v1

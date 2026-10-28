@@ -1,6 +1,6 @@
 # Project Harmonize
 
-Compare structural predictions from AlphaFold2, ESMFold, and standard ESMFold2 for
+Compare structural predictions from OpenFold2 (AlphaFold2 weights), ESMFold, and standard ESMFold2 for
 gpD, RamR, FNIII-10, PDZ3, RNase A, and DHFR. The notebook shows global and local
 agreement, within-model variability, confidence, and separate experimental-reference comparisons.
 
@@ -75,22 +75,37 @@ frozen experimental Cα snapshot with residue mappings, allowing offline use fro
 4. Smoke-test each provider on one target before the full panel:
 
 ```bash
-uv run --extra biohub python scripts/predict.py --execute --target gpd --model alphafold2
-uv run --extra biohub python scripts/predict.py --execute --target gpd --model esmfold2
+uv run --extra biohub python scripts/predict.py --execute --target gpd --model openfold2 --sample 1
+uv run --extra biohub python scripts/predict.py --execute --target gpd --model esmfold2 --sample 1
 uv run python scripts/predict.py --execute --target gpd --model esmfold
 # After checking the smoke results:
 uv run --extra biohub python scripts/predict.py --execute
 ```
 
-AF2 is requested one checkpoint per submission to preserve unambiguous sample identity.
-It uses JackHMMer, the configured MSA databases, templates, and unrelaxed monomer outputs.
+Get the NVIDIA key from [OpenFold2](https://build.nvidia.com/openfold/openfold2), and the Biohub
+token from its [developer console](https://biohub.ai/developer-console/api-keys). The NVIDIA key
+is also used for MSA search. RCSB template search needs no key. Do not use the deprecated AF2 page.
+
+OpenFold2 is requested one checkpoint per submission to preserve unambiguous sample identity.
+NVIDIA's model card specifies **AlphaFold 2.3.2 weights**; this is recorded as OpenFold2 with
+AF2 weights, rather than independently trained OpenFold weights. Relaxation is disabled.
+The first smoke command submits one checkpoint, preceded by one shared MSA/template preparation.
+The full run reuses successful results and still requests **66 structures** in total.
+
+This protocol replaces JackHMMer/HHsearch with NVIDIA MMseqs2/ColabFold MSA search and a separate
+RCSB template search. Templates remain enabled. All five checkpoints receive the same frozen
+inputs; standard presets 1–2 use template features, while 3–5 do not. See the
+[OpenFold2 input protocol](docs/openfold2.md) for selection thresholds and provenance.
+The new run is `runs/panel-openfold2`; the historical `runs/panel` is preserved, along with
+`configs/protocol-alphafold2-legacy.yaml`. Protocols and caches are never silently relabeled.
 ESMFold2 uses `esmfold2-2026-05`, 20 loops, 100 steps, and five uncached stochastic samples.
 ESMFold has one sample because the legacy API does not expose ensemble controls.
 
 Provider adapters are fixture-tested; credentialed live inference remains unverified.
 The legacy ESM Atlas endpoint may be unavailable. Its PDB B-factor values are preserved,
 but their scale is left **unknown**, rather than inferred from the observed maximum.
-AF2 pLDDT is 0–100; the pinned Biohub SDK's result pLDDT is 0–1 and is converted explicitly.
+OpenFold2 JSON pLDDT is 0–100; absent JSON confidence leaves structure B-factors unnormalized.
+The pinned Biohub SDK's result pLDDT is 0–1 and is converted explicitly.
 Missing pLDDT/PAE remains missing.
 
 Completed samples are immutable and checksum-verified. Reruns reuse cache entries. NVIDIA
@@ -104,7 +119,7 @@ An existing prediction can be imported without substituting model identity:
 ```python
 from harmonize import load_run, import_prediction
 
-run = load_run("runs/panel")
+run = load_run("runs/panel-openfold2")
 import_prediction(
     run,
     "gpd",
@@ -121,7 +136,7 @@ full-length exact sequence matches may be renumbered safely. Ambiguous chains/in
 
 ## Analysis outputs and interpretation
 
-`compare_run(load_run("runs/panel"))` makes no API calls. It writes pair and per-residue CSVs,
+`compare_run(load_run("runs/panel-openfold2"))` makes no API calls. It writes pair and per-residue CSVs,
 summary quantiles, confidence summaries, medoid selections, native US-align output, and provenance.
 
 - **TM-score:** fixed input-residue correspondence, full input-length normalization for

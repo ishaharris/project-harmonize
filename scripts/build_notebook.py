@@ -19,7 +19,7 @@ def code(text, **metadata):
 
 markdown("""# Project Harmonize · structural concordance
 
-Compare AlphaFold2, ESMFold, and ESMFold2 on six frozen PDB-derived constructs.
+Compare OpenFold2 (AlphaFold2 weights), ESMFold, and ESMFold2 on six frozen PDB-derived constructs.
 
 **The default mode is offline validation.** Its structures are perturbed experimental coordinates,
 with synthetic confidence values, and are **not model predictions**. Real prediction slots are
@@ -46,6 +46,7 @@ from IPython.display import HTML, Markdown, display
 
 from harmonize import compare_run, run_predictions
 from harmonize.fixtures import build_validation_run
+from harmonize.openfold import preparation_status
 from harmonize.plots import interactive_viewer, plot_distributions, plot_overview, plot_residues, structure_view
 from harmonize.targets import load_reference_snapshot
 from harmonize.workflow import artifact_arrays, status_table
@@ -72,17 +73,25 @@ display(pd.DataFrame([{"protein": t.name, "sequence": t.sequence, "sha256": t.se
 """)
 markdown("""## Real prediction readiness and collection
 
-The protocol requests 5 AF2 parameter sets, 5 fresh standard ESMFold2 samples, and 1 ESMFold
-prediction per protein. AF2 uses MSA/template information; the ESM models use sequence alone.
-AF2 checkpoint variation and ESMFold2 sampling variation are different sources of variability.
+The protocol requests 5 OpenFold2/AF2 parameter sets, 5 fresh standard ESMFold2 samples, and 1 ESMFold
+prediction per protein. NVIDIA's OpenFold2 uses AlphaFold2 weights. Its inputs are prepared by
+NVIDIA MMseqs2/ColabFold MSA search and a separate RCSB experimental-template search. This
+replaces the deprecated AF2 endpoint and the original JackHMMer/HHsearch workflow. Templates
+remain enabled; standard parameter sets 1–2 use template features, while 3–5 are template-free.
+The ESM models use sequence alone. Checkpoint variation differs from ESMFold2 sampling variation.
+
+Up to four template chains pass the documented selection policy; source structures, chain
+mapping, scores, and checksums are retained. Exact reference entries are allowed and flagged.
+The table below is an offline view of preparation status. No missing template is silently omitted.
 
 With `RUN_LIVE = False`, this cell only prepares or loads the manifest. Credentials stay in `.env`.
 Indeterminate submissions are retained for inspection; saved NVIDIA job IDs resume polling.
 """)
-code("""panel = run_predictions(targets, ROOT / "runs/panel", ROOT / "configs/protocol.yaml", execute=RUN_LIVE)
+code("""panel = run_predictions(targets, ROOT / "runs/panel-openfold2", ROOT / "configs/protocol.yaml", execute=RUN_LIVE)
 panel_status = status_table(panel)
 display(panel_status.groupby(["model", "status"], dropna=False).size().rename("samples").reset_index())
 display(panel_status[["model", "status", "detail"]].drop_duplicates())
+display(pd.DataFrame(preparation_status(panel)))
 display(Markdown(f"**Real prediction run: {'complete' if panel.complete else 'INCOMPLETE'}** · "
                  f"{sum(a.status == 'complete' for a in panel.artifacts)}/{panel.expected_count} structures available."))
 """)

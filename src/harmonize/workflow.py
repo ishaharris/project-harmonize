@@ -32,7 +32,7 @@ def save_run(run: Run):
     atomic_json(run.directory / "run.json", run.model_dump(mode="json"))
 
 
-def load_run(directory="runs/panel") -> Run:
+def load_run(directory="runs/panel-openfold2") -> Run:
     directory = Path(directory).resolve()
     run = Run.model_validate(read_json(directory / "run.json"))
     run.directory = directory
@@ -49,6 +49,13 @@ def validate_artifact(run, artifact):
     ):
         if not filename or not digest or sha256((run.directory / filename).read_bytes()) != digest:
             raise ValueError(f"Artifact missing or checksum mismatch: {artifact.label}")
+    if filename := artifact.provenance.get("preparation_file"):
+        from .openfold import verify_preparation
+
+        path = run.directory / filename
+        if sha256(path.read_bytes()) != artifact.provenance["preparation_sha256"]:
+            raise ValueError("OpenFold preparation manifest changed")
+        verify_preparation(path.parent)
 
 
 def artifact_arrays(run, artifact):
@@ -59,7 +66,7 @@ def artifact_arrays(run, artifact):
 
 def initialize_run(
     targets: list[Target],
-    directory="runs/panel",
+    directory="runs/panel-openfold2",
     protocol="configs/protocol.yaml",
     *,
     kind="prediction",
@@ -177,12 +184,13 @@ def store_output(run, target, artifact, output):
 
 def run_predictions(
     targets,
-    directory="runs/panel",
+    directory="runs/panel-openfold2",
     protocol="configs/protocol.yaml",
     *,
     execute=False,
     models=None,
     target_ids=None,
+    sample_ids=None,
     retry_failed=False,
     provider_factory=make_provider,
 ):
@@ -211,13 +219,26 @@ def run_predictions(
                             validate_artifact(run, artifact)
                             _persist(run, artifact)
                             continue
+                        if (
+                            artifact.status == "indeterminate"
+                            and spec.provider == "nvidia_openfold2"
+                        ):
+                            job_path = cached.parent / "job.json"
+                            job = read_json(job_path) if job_path.exists() else {}
+                            if job.get("status") in ("submitted", "complete"):
+                                # The stage's durable state is more recent than the run manifest.
+                                # Its adapter polls or reads the response; it never submits anew.
+                                artifact.status = "submitted"
+                                artifact.request_id = job.get("request_id")
                         if artifact.status == "indeterminate" or (
                             artifact.status == "failed" and not retry_failed
                         ):
                             _persist(run, artifact)
                             continue
-                    selected = (models is None or model in models) and (
-                        target_ids is None or target.id in target_ids
+                    selected = (
+                        (models is None or model in models)
+                        and (target_ids is None or target.id in target_ids)
+                        and (sample_ids is None or sample in sample_ids)
                     )
                     reason = readiness(spec.provider)
                     if not execute or not selected or reason:
@@ -233,8 +254,15 @@ def run_predictions(
                     previous = artifact.model_dump()
                     if artifact.status != "submitted":
                         # A process crash after this write must not cause an automatic re-POST.
-                        artifact.status = "indeterminate"
-                        artifact.error = "Submission started; result not yet persisted"
+                        # OpenFold owns durable state for both preparation and inference.
+                        artifact.status = (
+                            "blocked" if spec.provider == "nvidia_openfold2" else "indeterminate"
+                        )
+                        artifact.error = (
+                            "Preparing inputs"
+                            if spec.provider == "nvidia_openfold2"
+                            else "Submission started; result not yet persisted"
+                        )
                     _persist(run, artifact)
 
                     def checkpoint(status, request_id):

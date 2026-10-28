@@ -1,0 +1,37 @@
+protocol_version: '1'
+models:
+  alphafold2:
+    provider: nvidia
+    version: "NVIDIA hosted AlphaFold2; immutable deployment version unavailable"
+    samples: ['1', '2', '3', '4', '5']
+    settings:
+      algorithm: jackhmmer
+      databases: [uniref90, mgnify, small_bfd]
+      e_value: 0.0001
+      iterations: 1
+      relax_prediction: false
+      structure_model_preset: monomer
+      num_predictions_per_model: 1
+      max_msa_sequences: 4000
+      skip_template_search: false
+      override_msa_db_limits: false
+      template_searcher: hhsearch
+  esmfold:
+    provider: esmatlas
+    version: esmfold_v1
+    samples: ['1']
+    settings: {}
+  esmfold2:
+    provider: biohub
+    version: esmfold2-2026-05
+    samples: ['1', '2', '3', '4', '5']
+    settings:
+      num_loops: 20
+      num_sampling_steps: 100
+      include_pae: true
+      lm_dropout: 0.3
+      lm_mask_pct: 0.0
+      msa_max_depth: 1024
+      msa_column_mask_rate: 0.1
+      include_embeddings: false
+      include_distogram: false

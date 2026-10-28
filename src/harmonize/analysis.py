@@ -60,7 +60,9 @@ def choose_medoids(artifacts, pairs):
     return result
 
 
-def compare_run(run="runs/panel", *, output_dir=None, executable=".tools/usalign/USalign"):
+def compare_run(
+    run="runs/panel-openfold2", *, output_dir=None, executable=".tools/usalign/USalign"
+):
     if not hasattr(run, "artifacts"):
         run = load_run(run)
     directory = Path(output_dir or run.directory / "analysis").resolve()

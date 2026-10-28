@@ -36,12 +36,14 @@ and SHA-256 provenance in `assets/`. The Python client `py3Dmol` is locked separ
 
 Provider references:
 
-- [NVIDIA AlphaFold2 API](https://docs.api.nvidia.com/nim/reference/deepmind-alphafold2-infer)
+- [NVIDIA OpenFold2 API](https://docs.api.nvidia.com/nim/reference/openfold-openfold2-infer)
+- [NVIDIA MSA search API](https://docs.api.nvidia.com/nim/reference/colabfold-msa-search-infer)
+- [RCSB template search](https://search.rcsb.org/)
 - [ESM Atlas folding API](https://esmatlas.com/about)
 - [Biohub ESM SDK](https://github.com/Biohub/esm)
 - [Biotite symmetric lDDT](https://www.biotite-python.org/latest/apidoc/biotite.structure.lddt.html)
 
-The hosted AF2 endpoint does not expose an immutable deployment version in the documented
+The hosted OpenFold2 endpoint does not expose an immutable deployment version in the documented
 request. Its identity is recorded with that limitation, alongside endpoint, parameters, SDK
 versions, timestamps, checksums, and any request IDs. Stored artifacts reproduce the analysis;
 remote inference is not claimed to be bitwise reproducible.
