@@ -69,7 +69,9 @@ frozen experimental Cα snapshot with residue mappings, allowing offline use fro
 
 ## Collect real predictions later
 
-1. Copy `.env.example` to `.env` and set `NVIDIA_API_KEY` and `BIOHUB_API_TOKEN` locally.
+1. Run `.venv/bin/python scripts/configure_keys.py` in Terminal. Paste each key at its hidden
+   prompt and press Enter. It saves `NVIDIA_API_KEY` and `BIOHUB_API_TOKEN` to the local `.env`;
+   Enter alone preserves an existing value. Alternatively, copy `.env.example` and edit locally.
 2. Install the optional client with `uv sync --frozen --group notebook --extra biohub`.
 3. Check readiness without submitting jobs: `uv run python scripts/predict.py`.
 4. Smoke-test each provider on one target before the full panel:
