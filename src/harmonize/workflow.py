@@ -240,7 +240,7 @@ def run_predictions(
                         and (target_ids is None or target.id in target_ids)
                         and (sample_ids is None or sample in sample_ids)
                     )
-                    reason = readiness(spec.provider)
+                    reason = readiness(spec.provider, sample=sample)
                     if not execute or not selected or reason:
                         if artifact.status != "submitted":
                             artifact.status = "blocked"

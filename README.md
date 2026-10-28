@@ -4,9 +4,11 @@ Compare structural predictions from OpenFold2 (AlphaFold2 weights), ESMFold, and
 gpD, RamR, FNIII-10, PDZ3, RNase A, and DHFR. The notebook shows global and local
 agreement, within-model variability, confidence, and separate experimental-reference comparisons.
 
-**Current state: offline-ready. No live predictions have been submitted.** The executed
-validation report uses explicitly labeled synthetic perturbations of experimental coordinates.
-The real panel remains incomplete until its 66 requested structures are available.
+**Current state (2026-10-28): one validated live gpD ESMFold2 prediction, 1/66 complete.**
+The NVIDIA MSA and legacy ESM Atlas smoke calls returned HTTP 504 and remain uncertain;
+they are not automatically resubmitted. Fresh ESMFold2 ensemble collection is blocked until
+server-cache behavior can be verified. The executed validation report remains explicitly labeled
+synthetic perturbations of experimental coordinates; the prediction report uses only real outputs.
 
 ## Open the notebook
 
@@ -100,11 +102,15 @@ inputs; standard presets 1–2 use template features, while 3–5 do not. See th
 [OpenFold2 input protocol](docs/openfold2.md) for selection thresholds and provenance.
 The new run is `runs/panel-openfold2`; the historical `runs/panel` is preserved, along with
 `configs/protocol-alphafold2-legacy.yaml`. Protocols and caches are never silently relabeled.
-ESMFold2 uses `esmfold2-2026-05`, 20 loops, 100 steps, and five uncached stochastic samples.
+ESMFold2 uses `esmfold2-2026-05`, 20 loops, and 100 steps. Five fresh samples remain the planned
+protocol, but the pinned SDK and current API schema do not expose the assumed `disable_cache`
+control. Only sample 1 can be collected; samples 2–5 are blocked pending verification. The initial
+SDK keyword bug was reproduced offline with zero network calls, fixed, and safely retried.
 ESMFold has one sample because the legacy API does not expose ensemble controls.
 
-Provider adapters are fixture-tested; credentialed live inference remains unverified.
-The legacy ESM Atlas endpoint may be unavailable. Its PDB B-factor values are preserved,
+Biohub access and the standard model response have been verified on gpD, with 95/95 Cα positions
+and a 95×95 PAE matrix. NVIDIA folding itself has not yet run because MSA preparation timed out.
+The legacy ESM Atlas endpoint did not yield a structure. Its PDB B-factor values are preserved,
 but their scale is left **unknown**, rather than inferred from the observed maximum.
 OpenFold2 JSON pLDDT is 0–100; absent JSON confidence leaves structure B-factors unnormalized.
 The pinned Biohub SDK's result pLDDT is 0–1 and is converted explicitly.

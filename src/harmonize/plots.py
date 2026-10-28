@@ -106,6 +106,19 @@ def plot_residues(analysis, target_id):
     axes[2].set_xlabel(
         "Input sequence position (1-based); author numbering is retained in residues.csv"
     )
+    for ax in axes[:2]:
+        if not ax.lines:
+            ax.text(
+                0.5,
+                0.5,
+                "No completed cross-model comparisons yet",
+                ha="center",
+                transform=ax.transAxes,
+            )
+    if not axes[2].lines:
+        axes[2].text(
+            0.5, 0.5, "No prediction confidence available", ha="center", transform=axes[2].transAxes
+        )
     for ax in axes:
         ax.grid(alpha=0.15)
         if ax.get_legend_handles_labels()[0]:

@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 import numpy as np
 
-from .storage import atomic_json
+from .storage import atomic_json, read_json
 
 NVIDIA_URL = (
     "https://health.api.nvidia.com/v1/protein-structure/alphafold2/predict-structure-from-sequence"
@@ -30,6 +30,10 @@ class PendingSubmission(ProviderError):
     status = "submitted"
 
 
+class CacheControlUnverified(ProviderError):
+    status = "blocked"
+
+
 @dataclass
 class ProviderOutput:
     structure: str
@@ -41,7 +45,7 @@ class ProviderOutput:
     provenance: dict = field(default_factory=dict)
 
 
-def readiness(provider):
+def readiness(provider, sample=None):
     if provider in ("nvidia", "nvidia_openfold2") and not os.getenv("NVIDIA_API_KEY"):
         return "NVIDIA_API_KEY is not configured"
     if provider == "biohub":
@@ -49,6 +53,8 @@ def readiness(provider):
             return "BIOHUB_API_TOKEN is not configured"
         if importlib.util.find_spec("esm") is None:
             return "Install the optional Biohub client: uv sync --extra biohub --group notebook"
+        if sample is not None and sample != "1":
+            return "Fresh ESMFold2 sample control is unverified; ensemble collection is blocked"
     if provider not in ("nvidia", "nvidia_openfold2", "biohub", "esmatlas"):
         return f"Unknown provider: {provider}"
     return None
@@ -240,6 +246,11 @@ class BiohubProvider:
         from esm.sdk.forge import SequenceStructureForgeInferenceClient
         from esm.utils.structure.input_builder import ProteinInput, StructurePredictionInput
 
+        if sample != "1":
+            raise CacheControlUnverified(
+                "Biohub fresh-sample cache control is not exposed by the pinned SDK/API schema; "
+                "ensemble collection is blocked pending verification"
+            )
         factory = self.client_factory or SequenceStructureForgeInferenceClient
         client = factory(
             model=spec.version,
@@ -258,12 +269,39 @@ class BiohubProvider:
                 "sequence": target.sequence,
                 "model": spec.version,
                 "settings": spec.settings,
-                "disable_cache": True,
+                "server_cache_control": "not exposed by pinned SDK/current endpoint schema",
+                "fresh_sample_verified": False,
                 "seed": None,
             },
         )
+        # Keep the actual wire response before SDK decoding. No request headers are saved.
+        if isinstance(client, SequenceStructureForgeInferenceClient):
+
+            def preserve_response(response):
+                response.read()
+                (directory / "response.json").write_bytes(response.content)
+                atomic_json(
+                    directory / "response_metadata.json",
+                    {
+                        "http_status": response.status_code,
+                        "headers": {
+                            key: response.headers[key]
+                            for key in (
+                                "date",
+                                "x-request-id",
+                                "cf-cache-status",
+                                "x-cache",
+                                "age",
+                                "cache-control",
+                            )
+                            if key in response.headers
+                        },
+                    },
+                )
+
+            client.client.event_hooks["response"].append(preserve_response)
         try:
-            result = client.fold_all_atom(request, config=config, disable_cache=True)
+            result = client.fold_all_atom(request, config=config)
         except Exception as exc:
             raise IndeterminateSubmission(
                 "Biohub request interrupted; acceptance is unknown"
@@ -281,6 +319,17 @@ class BiohubProvider:
             raise ProviderError(
                 "Unexpected multi-result Biohub response for a single requested sample"
             )
+        response_metadata = {}
+        if (directory / "response.json").exists():
+            raw = read_json(directory / "response.json")
+            if "data" in raw and "outputs" not in raw:
+                raw = raw["data"]
+            if raw.get("model") != spec.version:
+                raise ProviderError("Biohub response model does not match the requested model")
+            response_metadata = {
+                "response_model": raw["model"],
+                "response_created": raw.get("created"),
+            }
         structure = result.complex.to_mmcif()
         (directory / "response.cif").write_text(structure)
         confidence = None if result.plddt is None else result.plddt.detach().cpu().numpy()
@@ -292,16 +341,18 @@ class BiohubProvider:
         return ProviderOutput(
             structure,
             format="cif",
-            plddt=confidence,
+            plddt=confidence if confidence is not None else np.full(len(target.sequence), np.nan),
             pae=pae,
             confidence_scale="0-1",
             confidence_source="Biohub MolecularComplexResult.plddt",
             provenance={
                 "endpoint": "https://biohub.ai/api/v1/fold_all_atom",
-                "disable_cache": True,
+                "server_cache_control": "not exposed by pinned SDK/current endpoint schema",
+                "fresh_sample_verified": False,
                 "variation": "stochastic_sampling",
                 "seed_control": "unavailable",
                 "ptm": None if result.ptm is None else float(result.ptm),
+                **response_metadata,
             },
         )
 

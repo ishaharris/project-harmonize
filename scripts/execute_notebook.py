@@ -12,7 +12,9 @@ from nbconvert import HTMLExporter
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["validation", "prediction"], default="validation")
+    parser.add_argument("--target", choices=["gpd", "ramr", "fniii10", "pdz3", "rnasea", "dhfr"])
     args = parser.parse_args()
+    target = args.target or ("gpd" if args.mode == "prediction" else "pdz3")
     root = Path(__file__).resolve().parents[1]
     os.environ.setdefault("MPLCONFIGDIR", str(root / ".tools/matplotlib"))
     os.environ.setdefault("XDG_CACHE_HOME", str(root / ".tools/cache"))
@@ -21,7 +23,7 @@ def main():
     notebook = nbformat.read(root / "notebooks/01_concordance.ipynb", as_version=4)
     for cell in notebook.cells:
         if "parameters" in cell.metadata.get("tags", []):
-            cell.source = f'MODE = "{args.mode}"\nRUN_LIVE = False\nTARGET_ID = "pdz3"'
+            cell.source = f'MODE = "{args.mode}"\nRUN_LIVE = False\nTARGET_ID = "{target}"'
     NotebookClient(
         notebook, timeout=600, kernel_name="harmonize", resources={"metadata": {"path": str(root)}}
     ).execute()
