@@ -106,6 +106,7 @@ def compare_run(
         jobs += [
             (a.label, "experimental", a.model, "experimental", "experimental_reference")
             for a in artifacts
+            if sum(r.reference_eligible for r in target.residues) >= 3
         ]
         for left, right, left_model, right_model, comparison_type in jobs:
             norm = (

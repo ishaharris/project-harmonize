@@ -178,3 +178,17 @@ Pre-commit runs Ruff and strips notebook outputs. Offline tests prohibit live HT
 cover residue mapping, geometry, missing data, provider responses, cache/recovery, and full-panel
 fixture counts. CI installs dependencies, builds the pinned native tool, and executes both safe
 notebook modes. No Git remote or publication is configured.
+
+## nf-core on RunPod
+
+A reusable SSH launcher is available for **nf-core/proteinfold 2.0.0**, initially
+running ColabFold (five checkpoints, templates enabled, no relaxation) and original
+ESMFold. It keeps the NVIDIA/API runs separate and imports results into Harmonize.
+
+```bash
+uv run python scripts/runpod.py run
+```
+
+It prompts for full SSH connection details and the local key path. See
+[RunPod setup, resume, and larger batches](docs/runpod.md). **Live RunPod validation
+is pending**; the launcher checks container compatibility before model downloads.

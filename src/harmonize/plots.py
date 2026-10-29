@@ -182,7 +182,7 @@ def structure_view(analysis, target_id, labels=None, include_reference=True):
             if a.target_id == target_id and a.label == label and a.status == "complete"
         )
         structures.append((label, artifact_arrays(analysis.run, artifact)["xyz"]))
-    if include_reference:
+    if include_reference and sum(r.reference_eligible for r in target.residues) >= 3:
         structures.append(("experimental reference", reference_arrays(target)["xyz"]))
     if not structures:
         raise ValueError("No structures available for this target")

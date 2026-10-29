@@ -45,3 +45,6 @@ select = ["E4", "E7", "E9", "F", "I"]
 testpaths = ["tests"]
 addopts = "-ra"
 markers = ["live: explicitly enabled network inference", "native: requires pinned US-align"]
+
+[tool.uv]
+default-groups = ["dev", "notebook"]
