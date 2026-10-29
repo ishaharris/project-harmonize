@@ -91,7 +91,7 @@ def validate_alignments(payload, sequence):
 
 class OpenFoldProvider:
     def __init__(self, client=None, sleep=time.sleep, max_polls=120):
-        self.client = client or httpx.Client(timeout=125)
+        self.client = client or httpx.Client(timeout=330)
         self.sleep = sleep
         self.max_polls = max_polls
 
@@ -121,7 +121,7 @@ class OpenFoldProvider:
             )
         headers = {
             "Authorization": f"Bearer {os.environ['NVIDIA_API_KEY']}",
-            "NVCF-POLL-SECONDS": "2",
+            "NVCF-POLL-SECONDS": "300",
         }
         # Even an explicit retry of failed polling must retain an accepted job's ID.
         request_id = state.get("request_id")
@@ -175,6 +175,14 @@ class OpenFoldProvider:
             atomic_json(state_path, state)
             return data, state
         except ProviderError as exc:
+            if exc.response_body is not None:
+                error_path = directory / "error-response.txt"
+                error_path.write_bytes(exc.response_body)
+                state.update(
+                    http_status=exc.http_status,
+                    error_response_file=error_path.name,
+                    error_response_sha256=sha256(exc.response_body),
+                )
             if exc.request_id and not request_id:
                 state.update(status="submitted", request_id=exc.request_id, error=str(exc))
                 atomic_json(state_path, state)

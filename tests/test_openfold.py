@@ -454,3 +454,31 @@ def test_gateway_timeout_request_id_is_retained_and_polled(tmp_path, monkeypatch
     assert result == {"finished": True}
     assert [request.method for request in calls] == ["POST", "GET"]
     provider.close()
+
+
+def test_nvidia_submission_allows_worker_pickup(tmp_path, monkeypatch):
+    monkeypatch.setenv("NVIDIA_API_KEY", "test-key")
+
+    def handler(request):
+        # A two-second override caused live requests to expire before worker pickup.
+        assert request.headers["NVCF-POLL-SECONDS"] == "300"
+        return httpx.Response(200, json={"result": "ok"})
+
+    provider = OpenFoldProvider(httpx.Client(transport=httpx.MockTransport(handler)))
+    result, state = provider._job(MSA_URL, {"sequence": "AAA"}, tmp_path)
+    assert result == {"result": "ok"}
+    assert state["status"] == "complete"
+
+
+def test_server_failure_body_is_retained_locally(tmp_path, monkeypatch):
+    monkeypatch.setenv("NVIDIA_API_KEY", "test-key")
+    body = b'{"error": "CUDA illegal memory access"}'
+    provider = OpenFoldProvider(
+        httpx.Client(transport=httpx.MockTransport(lambda _: httpx.Response(500, content=body)))
+    )
+    with pytest.raises(IndeterminateSubmission):
+        provider._job(OPENFOLD_URL, {"sequence": "AAA"}, tmp_path)
+    state = json.loads((tmp_path / "job.json").read_text())
+    assert state["http_status"] == 500
+    assert (tmp_path / state["error_response_file"]).read_bytes() == body
+    assert "test-key" not in (tmp_path / "job.json").read_text()

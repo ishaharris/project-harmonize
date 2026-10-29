@@ -81,8 +81,9 @@ remain enabled; standard parameter sets 1–2 use template features, while 3–5
 The ESM models use sequence alone. Checkpoint variation differs from ESMFold2 sampling variation.
 
 **Live smoke status (2026-10-29):** gpD has validated ESMFold and standard ESMFold2 predictions.
-The authorized ESM Atlas retry succeeded. NVIDIA MSA search returned HTTP 504 again, and its
-recovered request ID returned 404 at the official polling endpoint. Earlier attempts are preserved.
+NVIDIA MSA and template preparation now succeed after fixing the worker wait. OpenFold2
+inference returns HTTP 500 with a CUDA illegal-memory-access error, reproduced on one retry.
+No OpenFold2 structure is available; earlier attempts and raw server errors are preserved.
 The pinned Biohub SDK and
 current endpoint schema do not expose the cache-bypass control assumed in the original plan;
 ESMFold2 samples 2–5 are blocked pending verification, and sample 1 is not labeled verified fresh.

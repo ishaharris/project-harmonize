@@ -65,6 +65,14 @@ The CLI and notebook use `runs/panel-openfold2`. `load_run`, `compare_run`, and
 `preparation_status` make no network calls. Merely opening the notebook does not prepare inputs.
 The separate source-data smoke checks in `data/prepared/template-smoke` are not inference results.
 
-Credentialed NVIDIA OpenFold2 and MSA inference still require a live smoke test. Documentation
-availability is not proof of account access or hosted-schema compatibility. Any access or input
-failure remains explicit; there is no fallback to another model or paid provider.
+The 2026-10-29 live smoke test completed gpD MSA preparation and selected four templates.
+OpenFold2 inference returned HTTP 500 with CUDA illegal memory access on two attempts;
+no folding result was returned. Raw failures and request IDs are retained locally under
+`runs/panel-openfold2/diagnostics/`. There is no fallback to another model or paid provider.
+
+The hosted adapter uses `NVCF-POLL-SECONDS: 300` and a 330-second client timeout,
+allowing time for worker pickup. A two-second override caused live MSA requests to return 504 before worker pickup;
+the identical gpD request succeeded when the override was removed. See NVIDIA's
+[invocation error guidance](https://docs.nvidia.com/nvcf/dev/overview/generic-http-function-invocation).
+
+The 300-second wait also follows the [OpenFold2 example](https://docs.nvidia.com/nim/bionemo/openfold2/2.4.0/prerequisites.html).

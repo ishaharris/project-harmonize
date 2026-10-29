@@ -21,6 +21,8 @@ ESMATLAS_URL = "https://api.esmatlas.com/foldSequence/v1/pdb/"
 class ProviderError(RuntimeError):
     status = "failed"
     request_id = None
+    response_body = None
+    http_status = None
 
 
 class IndeterminateSubmission(ProviderError):
@@ -92,6 +94,8 @@ def request_http(client, method, url, *, sleep=time.sleep, attempts=3, **kwargs)
                     f"HTTP {response.status_code}; inference acceptance is unknown"
                 )
                 error.request_id = response.headers.get("nvcf-reqid")
+                error.response_body = response.content
+                error.http_status = response.status_code
                 raise error
             if attempt == attempts - 1:
                 raise PendingSubmission(
