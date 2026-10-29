@@ -80,8 +80,10 @@ replaces the deprecated AF2 endpoint and the original JackHMMer/HHsearch workflo
 remain enabled; standard parameter sets 1–2 use template features, while 3–5 are template-free.
 The ESM models use sequence alone. Checkpoint variation differs from ESMFold2 sampling variation.
 
-**Live smoke status:** one standard ESMFold2 gpD prediction has been validated. NVIDIA MSA search
-and the legacy ESM Atlas call returned HTTP 504 and remain uncertain. The pinned Biohub SDK and
+**Live smoke status (2026-10-29):** gpD has validated ESMFold and standard ESMFold2 predictions.
+The authorized ESM Atlas retry succeeded. NVIDIA MSA search returned HTTP 504 again, and its
+recovered request ID returned 404 at the official polling endpoint. Earlier attempts are preserved.
+The pinned Biohub SDK and
 current endpoint schema do not expose the cache-bypass control assumed in the original plan;
 ESMFold2 samples 2–5 are blocked pending verification, and sample 1 is not labeled verified fresh.
 

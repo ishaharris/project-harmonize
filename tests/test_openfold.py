@@ -170,7 +170,7 @@ def test_shared_preparation_and_fold_cache(targets, spec, template_text, tmp_pat
 
     def handler(request):
         requests.append(request)
-        if request.url.host != "health.api.nvidia.com":
+        if request.url.host not in ("health.api.nvidia.com", "api.nvcf.nvidia.com"):
             return public_handler(request, template_text)
         payload = json.loads(request.content)
         if str(request.url) == MSA_URL:
@@ -218,7 +218,7 @@ def test_async_preparation_and_inference_have_separate_ids(
 
     def handler(request):
         methods.append((request.method, str(request.url)))
-        if request.url.host != "health.api.nvidia.com":
+        if request.url.host not in ("health.api.nvidia.com", "api.nvcf.nvidia.com"):
             return public_handler(request, template_text)
         if request.method == "POST":
             return httpx.Response(
@@ -328,7 +328,7 @@ def test_openfold_rejects_incompatible_responses(
     target = targets[1]
 
     def handler(request):
-        if request.url.host != "health.api.nvidia.com":
+        if request.url.host not in ("health.api.nvidia.com", "api.nvcf.nvidia.com"):
             return public_handler(request, template_text)
         if str(request.url) == MSA_URL:
             return httpx.Response(200, json=msa_payload(target))
@@ -362,7 +362,7 @@ def test_process_interruption_after_response_recovers_without_post(
 
     def handler(request):
         requests.append(request)
-        if request.url.host != "health.api.nvidia.com":
+        if request.url.host not in ("health.api.nvidia.com", "api.nvcf.nvidia.com"):
             return public_handler(request, template_text)
         if str(request.url) == MSA_URL:
             return httpx.Response(200, json=msa_payload(target))
@@ -429,3 +429,28 @@ def test_single_sample_smoke_selection(targets, tmp_path):
     )
     assert calls == ["1"]
     assert not run.complete
+
+
+def test_gateway_timeout_request_id_is_retained_and_polled(tmp_path, monkeypatch):
+    from harmonize.providers import PendingSubmission
+    from harmonize.storage import read_json
+
+    monkeypatch.setenv("NVIDIA_API_KEY", "test-secret")
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        if request.method == "POST":
+            return httpx.Response(504, headers={"nvcf-reqid": "recoverable"})
+        assert str(request.url) == "https://api.nvcf.nvidia.com/v2/nvcf/pexec/status/recoverable"
+        return httpx.Response(200, json={"finished": True})
+
+    provider = OpenFoldProvider(httpx.Client(transport=httpx.MockTransport(handler)))
+    with pytest.raises(PendingSubmission):
+        provider._job(OPENFOLD_URL, {"sequence": "AAA"}, tmp_path)
+    assert read_json(tmp_path / "job.json")["request_id"] == "recoverable"
+    assert read_json(tmp_path / "job.json")["status"] == "submitted"
+    result, _ = provider._job(OPENFOLD_URL, {"sequence": "AAA"}, tmp_path)
+    assert result == {"finished": True}
+    assert [request.method for request in calls] == ["POST", "GET"]
+    provider.close()

@@ -14,12 +14,13 @@ from .storage import atomic_json, read_json
 NVIDIA_URL = (
     "https://health.api.nvidia.com/v1/protein-structure/alphafold2/predict-structure-from-sequence"
 )
-NVIDIA_STATUS_URL = "https://health.api.nvidia.com/v1/status/"
+NVIDIA_STATUS_URL = "https://api.nvcf.nvidia.com/v2/nvcf/pexec/status/"
 ESMATLAS_URL = "https://api.esmatlas.com/foldSequence/v1/pdb/"
 
 
 class ProviderError(RuntimeError):
     status = "failed"
+    request_id = None
 
 
 class IndeterminateSubmission(ProviderError):
@@ -87,9 +88,11 @@ def request_http(client, method, url, *, sleep=time.sleep, attempts=3, **kwargs)
             continue
         if response.status_code >= 500:
             if method == "POST":
-                raise IndeterminateSubmission(
+                error = IndeterminateSubmission(
                     f"HTTP {response.status_code}; inference acceptance is unknown"
                 )
+                error.request_id = response.headers.get("nvcf-reqid")
+                raise error
             if attempt == attempts - 1:
                 raise PendingSubmission(
                     f"Status endpoint HTTP {response.status_code}; resume later"

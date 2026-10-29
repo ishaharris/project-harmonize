@@ -8,6 +8,7 @@ from pathlib import Path
 import httpx
 
 from .providers import (
+    NVIDIA_STATUS_URL,
     IndeterminateSubmission,
     PendingSubmission,
     ProviderError,
@@ -19,7 +20,7 @@ from .templates import search_templates
 
 OPENFOLD_URL = "https://health.api.nvidia.com/v1/biology/openfold/openfold2/predict-structure-from-msa-and-template"
 MSA_URL = "https://health.api.nvidia.com/v1/biology/colabfold/msa-search/predict"
-STATUS_URL = "https://health.api.nvidia.com/v1/status/"
+STATUS_URL = NVIDIA_STATUS_URL
 
 
 class PreparationBlocked(ProviderError):
@@ -174,6 +175,14 @@ class OpenFoldProvider:
             atomic_json(state_path, state)
             return data, state
         except ProviderError as exc:
+            if exc.request_id and not request_id:
+                state.update(status="submitted", request_id=exc.request_id, error=str(exc))
+                atomic_json(state_path, state)
+                if checkpoint:
+                    checkpoint("submitted", exc.request_id)
+                raise PendingSubmission(
+                    "NVIDIA error response supplied a request ID; poll the saved request without resubmitting"
+                ) from exc
             state.update(status=exc.status, error=str(exc))
             if request_id:
                 state["request_id"] = request_id

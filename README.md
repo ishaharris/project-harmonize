@@ -4,9 +4,10 @@ Compare structural predictions from OpenFold2 (AlphaFold2 weights), ESMFold, and
 gpD, RamR, FNIII-10, PDZ3, RNase A, and DHFR. The notebook shows global and local
 agreement, within-model variability, confidence, and separate experimental-reference comparisons.
 
-**Current state (2026-10-28): one validated live gpD ESMFold2 prediction, 1/66 complete.**
-The NVIDIA MSA and legacy ESM Atlas smoke calls returned HTTP 504 and remain uncertain;
-they are not automatically resubmitted. Fresh ESMFold2 ensemble collection is blocked until
+**Current state (2026-10-29): validated live gpD ESMFold and ESMFold2 predictions, 2/66 complete.**
+The explicitly authorized ESM Atlas retry succeeded. NVIDIA MSA returned HTTP 504 again;
+its recovered request ID returned 404 at the official Cloud Functions status endpoint.
+The original attempts and retry authorization are retained. Fresh ESMFold2 ensemble collection is blocked until
 server-cache behavior can be verified. The executed validation report remains explicitly labeled
 synthetic perturbations of experimental coordinates; the prediction report uses only real outputs.
 
@@ -110,7 +111,7 @@ ESMFold has one sample because the legacy API does not expose ensemble controls.
 
 Biohub access and the standard model response have been verified on gpD, with 95/95 Cα positions
 and a 95×95 PAE matrix. NVIDIA folding itself has not yet run because MSA preparation timed out.
-The legacy ESM Atlas endpoint did not yield a structure. Its PDB B-factor values are preserved,
+The legacy ESM Atlas retry yielded a complete gpD structure. Its PDB B-factor values are preserved,
 but their scale is left **unknown**, rather than inferred from the observed maximum.
 OpenFold2 JSON pLDDT is 0–100; absent JSON confidence leaves structure B-factors unnormalized.
 The pinned Biohub SDK's result pLDDT is 0–1 and is converted explicitly.

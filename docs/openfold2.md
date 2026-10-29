@@ -49,6 +49,9 @@ Total counts remain 66 structures and 55 prediction pairs per target.
 
 MSA and folding stages own separate durable job records. A resumed MSA request ID cannot be
 mistaken for a folding request ID. Bounded polling and rate-limit retries retain partial results.
+NVIDIA request IDs returned with gateway errors are retained and polled through the official
+[Cloud Functions result endpoint](https://docs.api.nvidia.com/cloud-functions/reference/getfunctioninvocationresult).
+An error without a recoverable ID remains uncertain. A missing result never triggers a new POST.
 Ambiguous POST outcomes are never automatically resubmitted; definite failures require
 `--retry-failed`. Public search/download GETs have bounded safe retries. Preparation is frozen
 on first success and checked when predictions are loaded. Change the recipe in a new run to
